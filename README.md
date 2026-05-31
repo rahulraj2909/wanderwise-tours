@@ -54,22 +54,34 @@ mvn clean package -DskipTests
 
 ## Deploy a public URL (Render + GitHub)
 
-GitHub stores code and runs CI; it does **not** host Spring Boot apps. Use [Render](https://render.com) (free tier) connected to this repo.
+GitHub stores code only. Use [Render](https://render.com) with **Docker** (Java is inside the image — do not use a blank Start Command).
 
-1. Sign up at [render.com](https://render.com) and link your GitHub account.
-2. **New → Blueprint** → select repo `rahulraj2909/wanderwise-tours` → apply `render.yaml`.
-3. Wait for both services to build (first deploy ~5–10 min).
-4. Open the **wanderwise-booking** service URL — that is your public customer site (`https://wanderwise-booking-xxxx.onrender.com/`).
-5. Admin portal: **wanderwise-catalog** URL + `/admin/login.html` (secret: `wanderwise-admin`).
+### Option A — Blueprint (recommended)
 
-| Service | Public role |
-|---------|-------------|
-| `wanderwise-booking` | Customer UI + checkout (main link to share) |
-| `wanderwise-catalog` | Catalog API + admin |
+1. [render.com](https://render.com) → sign in with GitHub.
+2. **New → Blueprint** → repo `rahulraj2909/wanderwise-tours` → apply `render.yaml`.
+3. Public site = **wanderwise-booking** URL. Admin = **wanderwise-catalog** URL + `/admin/login.html`.
 
-**Notes:** Free tier sleeps after ~15 min idle (cold start ~1 min). Data uses in-memory H2 and re-seeds on restart. Demo logins are the same as local.
+### Option B — Two Web Services (manual)
 
-If Blueprint fails on first try, deploy **wanderwise-catalog** first, copy its URL, then deploy **wanderwise-booking** with env `WANDERWISE_CATALOG_BASE_URL=https://your-catalog-url`.
+Create **two** services from the same repo. For each: **Runtime = Docker**, leave **Build** and **Start Command** empty.
+
+| Service | Dockerfile path | Root directory |
+|---------|-------------------|----------------|
+| Catalog | `docker/Dockerfile.catalog` | `.` (repo root) |
+| Booking | `docker/Dockerfile.booking` | `.` |
+
+**Environment variables**
+
+| Catalog | Booking |
+|---------|---------|
+| `SPRING_PROFILES_ACTIVE` = `render` | `SPRING_PROFILES_ACTIVE` = `render` |
+| (after booking exists) `WANDERWISE_BOOKING_BASE_URL` = booking URL | `WANDERWISE_CATALOG_BASE_URL` = catalog URL |
+| | `APP_BASE_URL` = booking URL |
+
+Deploy **catalog** first, then **booking**. Health check: `/actuator/health`.
+
+Profile on cloud is **`render`** (not `h2` / `dev`). Local PC still uses `h2`.
 
 ## Author
 

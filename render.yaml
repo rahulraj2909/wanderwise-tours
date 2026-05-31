@@ -1,12 +1,11 @@
-# Deploy from GitHub: Render Dashboard → New → Blueprint → connect rahulraj2909/wanderwise-tours
-# Public URLs: booking service = customer site; catalog service = admin/API backend.
+# Render Blueprint: Docker includes Java 17 (fixes "java: command not found" on native shell).
 services:
   - type: web
     name: wanderwise-catalog
-    runtime: java
+    runtime: docker
     plan: free
-    buildCommand: mvn -pl wanderwise-catalog-ingestion-service -am clean package -DskipTests
-    startCommand: java -jar wanderwise-catalog-ingestion-service/target/wanderwise-catalog-ingestion-service-1.0.0.jar
+    dockerfilePath: ./docker/Dockerfile.catalog
+    dockerContext: .
     healthCheckPath: /actuator/health
     envVars:
       - key: SPRING_PROFILES_ACTIVE
@@ -19,10 +18,10 @@ services:
 
   - type: web
     name: wanderwise-booking
-    runtime: java
+    runtime: docker
     plan: free
-    buildCommand: mvn -pl wanderwise-booking-service -am clean package -DskipTests
-    startCommand: java -jar wanderwise-booking-service/target/wanderwise-booking-service-1.0.0.jar
+    dockerfilePath: ./docker/Dockerfile.booking
+    dockerContext: .
     healthCheckPath: /actuator/health
     envVars:
       - key: SPRING_PROFILES_ACTIVE

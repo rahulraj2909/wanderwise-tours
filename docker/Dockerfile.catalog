@@ -1,0 +1,17 @@
+# Catalog + ingestion service (port from Render PORT env)
+FROM maven:3.9-eclipse-temurin-17-alpine AS build
+WORKDIR /build
+COPY pom.xml .
+COPY wanderwise-common/pom.xml wanderwise-common/pom.xml
+COPY wanderwise-catalog-ingestion-service/pom.xml wanderwise-catalog-ingestion-service/pom.xml
+COPY wanderwise-booking-service/pom.xml wanderwise-booking-service/pom.xml
+COPY wanderwise-common/src wanderwise-common/src
+COPY wanderwise-catalog-ingestion-service/src wanderwise-catalog-ingestion-service/src
+RUN mvn -pl wanderwise-catalog-ingestion-service -am package -DskipTests -q
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=build /build/wanderwise-catalog-ingestion-service/target/wanderwise-catalog-ingestion-service-1.0.0.jar app.jar
+ENV SPRING_PROFILES_ACTIVE=render
+EXPOSE 8081
+ENTRYPOINT ["java", "-jar", "app.jar"]

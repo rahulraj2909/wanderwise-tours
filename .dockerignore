@@ -1,0 +1,14 @@
+target/
+data/
+.git/
+.idea/
+.vscode/
+docs/
+scripts/
+.tools/
+*.md
+!README.md
+*.png
+*.docx
+.env
+.env.*
