@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WanderWise — Tours &amp; Attractions</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css?v=4">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="page-home">
 <header class="header" id="site-header"></header>
 
 <section class="hero">
@@ -24,15 +24,14 @@
     </div>
 </section>
 
-<section class="container section">
+<section class="container section section-compact">
     <h2 class="section-title">Popular destinations</h2>
-    <p class="muted">Browse city listings with ranking, price sort and pagination</p>
     <div id="city-chips" class="city-chips"></div>
 </section>
 
-<main class="container section">
+<main class="container section section-compact">
     <h2 class="section-title">Top experiences</h2>
-    <p id="loading" class="muted">Loading tours...</p>
+    <p id="loading" class="muted section-hint">Loading tours...</p>
     <div id="grid" class="grid"></div>
 </main>
 

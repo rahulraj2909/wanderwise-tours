@@ -131,6 +131,54 @@ body {
 .section { padding: 2.5rem 0 3rem; }
 .section-title { font-size: 1.6rem; margin-bottom: 1.5rem; font-weight: 700; }
 
+/* Home page: tighter layout, 4-column grid */
+.page-home .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+.page-home .hero {
+    padding: 1.75rem 0 1.85rem;
+}
+.page-home .hero h1 {
+    font-size: 1.85rem;
+    margin-bottom: 0.4rem;
+}
+.page-home .hero p {
+    font-size: 0.98rem;
+    margin-bottom: 1rem;
+    max-width: 520px;
+}
+.page-home .search-bar {
+    padding: 0.5rem;
+    gap: 0.5rem;
+}
+.page-home .search-bar input,
+.page-home .search-bar select {
+    padding: 0.55rem 0.75rem;
+}
+.page-home .section-compact {
+    padding: 0.85rem 0 1rem;
+}
+.page-home .section-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.55rem;
+}
+.page-home .section-hint {
+    margin-bottom: 0.5rem;
+    font-size: 0.88rem;
+}
+.page-home .city-chips {
+    margin-top: 0;
+    gap: 0.5rem;
+}
+.page-home .city-chip {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.88rem;
+}
+.page-home .grid {
+    gap: 1rem;
+}
+
 /* Top experiences / listings: 4 cards per row, then next row */
 .grid {
     display: grid;
