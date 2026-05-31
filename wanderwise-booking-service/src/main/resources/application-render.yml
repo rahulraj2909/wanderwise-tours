@@ -1,0 +1,34 @@
+# Cloud demo profile (e.g. Render.com): in-memory H2, mock payments, catalog via env URL.
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:booking;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: update
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+
+wanderwise:
+  catalog:
+    base-url: ${WANDERWISE_CATALOG_BASE_URL:http://localhost:8081}
+
+stripe:
+  enabled: false
+
+scheduler:
+  reconciliation-cron: "0 0 3 * * *"

@@ -1,0 +1,39 @@
+# Deploy from GitHub: Render Dashboard → New → Blueprint → connect rahulraj2909/wanderwise-tours
+# Public URLs: booking service = customer site; catalog service = admin/API backend.
+services:
+  - type: web
+    name: wanderwise-catalog
+    runtime: java
+    plan: free
+    buildCommand: mvn -pl wanderwise-catalog-ingestion-service -am clean package -DskipTests
+    startCommand: java -jar wanderwise-catalog-ingestion-service/target/wanderwise-catalog-ingestion-service-1.0.0.jar
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: WANDERWISE_BOOKING_BASE_URL
+        fromService:
+          type: web
+          name: wanderwise-booking
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: wanderwise-booking
+    runtime: java
+    plan: free
+    buildCommand: mvn -pl wanderwise-booking-service -am clean package -DskipTests
+    startCommand: java -jar wanderwise-booking-service/target/wanderwise-booking-service-1.0.0.jar
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: WANDERWISE_CATALOG_BASE_URL
+        fromService:
+          type: web
+          name: wanderwise-catalog
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: APP_BASE_URL
+        fromService:
+          type: web
+          name: wanderwise-booking
+          envVarKey: RENDER_EXTERNAL_URL

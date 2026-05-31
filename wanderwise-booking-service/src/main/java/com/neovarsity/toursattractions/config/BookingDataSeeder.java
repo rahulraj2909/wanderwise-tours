@@ -10,7 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile({"dev", "h2", "full"})
+@Profile({"dev", "h2", "full", "render"})
 @RequiredArgsConstructor
 public class BookingDataSeeder implements CommandLineRunner {
 

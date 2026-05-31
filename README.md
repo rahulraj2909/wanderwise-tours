@@ -52,6 +52,25 @@ mvn test
 mvn clean package -DskipTests
 ```
 
+## Deploy a public URL (Render + GitHub)
+
+GitHub stores code and runs CI; it does **not** host Spring Boot apps. Use [Render](https://render.com) (free tier) connected to this repo.
+
+1. Sign up at [render.com](https://render.com) and link your GitHub account.
+2. **New → Blueprint** → select repo `rahulraj2909/wanderwise-tours` → apply `render.yaml`.
+3. Wait for both services to build (first deploy ~5–10 min).
+4. Open the **wanderwise-booking** service URL — that is your public customer site (`https://wanderwise-booking-xxxx.onrender.com/`).
+5. Admin portal: **wanderwise-catalog** URL + `/admin/login.html` (secret: `wanderwise-admin`).
+
+| Service | Public role |
+|---------|-------------|
+| `wanderwise-booking` | Customer UI + checkout (main link to share) |
+| `wanderwise-catalog` | Catalog API + admin |
+
+**Notes:** Free tier sleeps after ~15 min idle (cold start ~1 min). Data uses in-memory H2 and re-seeds on restart. Demo logins are the same as local.
+
+If Blueprint fails on first try, deploy **wanderwise-catalog** first, copy its URL, then deploy **wanderwise-booking** with env `WANDERWISE_CATALOG_BASE_URL=https://your-catalog-url`.
+
 ## Author
 
 Rahul Kumar — [rahulraj2909@gmail.com](mailto:rahulraj2909@gmail.com)

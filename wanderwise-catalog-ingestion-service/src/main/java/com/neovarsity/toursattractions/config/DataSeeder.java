@@ -19,7 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 
 @Component
-@Profile({"dev", "h2", "full"})
+@Profile({"dev", "h2", "full", "render"})
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
