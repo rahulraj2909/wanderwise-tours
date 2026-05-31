@@ -1,4 +1,4 @@
-# Render Blueprint: Docker includes Java 17 (fixes "java: command not found" on native shell).
+# Render Blueprint: Docker includes Java 21 (fixes "java: command not found" on native shell).
 services:
   - type: web
     name: wanderwise-catalog

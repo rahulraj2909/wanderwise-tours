@@ -6,7 +6,7 @@ Multi-service marketplace for tours and attractions: catalog with vendor ingesti
 
 ![WanderWise booking home page — Discover Tours & Attractions](docs/report_diagrams/screenshot_home.png)
 
-**Stack:** Java 17 · Spring Boot 3.3.5 · Maven · JPA/H2 (local) · Redis (optional, `full` profile) · Stripe (optional; mock checkout by default)
+**Stack:** Java 21 · Spring Boot 3.3.5 · Maven · JPA/H2 (local) · Redis (optional, `full` profile) · Stripe (optional; mock checkout by default)
 
 ## Modules
 
@@ -20,7 +20,7 @@ Booking proxies public catalog APIs to 8081; services communicate via an interna
 
 ## Quick start (H2, local)
 
-**Requirements:** JDK 17+, Maven 3.9+
+**Requirements:** JDK 21+, Maven 3.9+
 
 ```bash
 git clone https://github.com/rahulraj2909/wanderwise-tours.git

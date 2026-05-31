@@ -1,5 +1,5 @@
 # Booking + customer UI (port from Render PORT env)
-FROM maven:3.9-eclipse-temurin-17-alpine AS build
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /build
 COPY pom.xml .
 COPY wanderwise-common/pom.xml wanderwise-common/pom.xml
@@ -9,7 +9,7 @@ COPY wanderwise-common/src wanderwise-common/src
 COPY wanderwise-booking-service/src wanderwise-booking-service/src
 RUN mvn -pl wanderwise-booking-service -am package -DskipTests -q
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /build/wanderwise-booking-service/target/wanderwise-booking-service-1.0.0.jar app.jar
 ENV SPRING_PROFILES_ACTIVE=render
