@@ -1,0 +1,38 @@
+{
+  "partner": "KLOOK",
+  "sku_list": [
+    {
+      "sku_id": "KL-DXB-101",
+      "name": "Vendor: Dubai Frame & Old Dubai Combo",
+      "description": "Klook flat SKU format — frame tickets plus abra ride.",
+      "city_code": "CTDUBAI",
+      "category_name": "Attraction",
+      "sku_type": "DAY_TRIP",
+      "duration_h": 5,
+      "cover_url": "https://images.unsplash.com/photo-1518684079-3c830dcef090?w=800&q=80",
+      "score": 4.68,
+      "reviews": 120,
+      "pax_types": [
+        { "type": "ADULT", "display": "Adult (12+)", "min_age": 12, "max_age": 99, "sell_price": 3299 },
+        { "type": "CHILD", "display": "Child (3-11)", "min_age": 3, "max_age": 11, "sell_price": 2199 },
+        { "type": "INFANT", "display": "Infant (0-2)", "min_age": 0, "max_age": 2, "sell_price": 0 }
+      ]
+    },
+    {
+      "sku_id": "KL-SG-202",
+      "name": "Vendor: Haw Par Villa & Cultural Stories",
+      "description": "Guided cultural park visit with storyteller.",
+      "city_code": "CTSINGAP",
+      "category_name": "Culture",
+      "sku_type": "ATTRACTION",
+      "duration_h": 2,
+      "cover_url": "https://images.unsplash.com/photo-1565967513811-9b1c40e0b50a?w=800&q=80",
+      "score": 4.55,
+      "reviews": 41,
+      "pax_types": [
+        { "type": "ADULT", "display": "Adult", "min_age": 13, "max_age": 99, "sell_price": 1599 },
+        { "type": "CHILD", "display": "Child", "min_age": 4, "max_age": 12, "sell_price": 899 }
+      ]
+    }
+  ]
+}

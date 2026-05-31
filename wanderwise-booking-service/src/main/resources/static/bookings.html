@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings — WanderWise</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header" id="site-header"></header>
+<main class="container section">
+    <h2 class="section-title">My Bookings</h2>
+    <p class="muted">View and manage all your upcoming and past trips.</p>
+    <div id="list"><p class="muted">Loading...</p></div>
+</main>
+<footer class="footer" id="site-footer"></footer>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script>
+async function load() {
+    const me = await api('/auth/me');
+    if (!me) { requireLogin('/bookings.html'); return; }
+
+    const page = await api(`/bookings/customer/${me.id}?page=0&size=50`);
+    const items = page.content || [];
+    const list = document.getElementById('list');
+    if (!items.length) {
+        list.innerHTML = '<p class="muted">No bookings yet. <a href="/">Browse tours</a></p>';
+        return;
+    }
+    list.innerHTML = items.map(b => `
+        <div class="booking-row">
+            <div>
+                <strong>${escapeHtml(b.attractionTitle)}</strong>
+                <p class="muted">${b.bookingReference} · ${b.visitDate} · ${b.guests} guests</p>
+            </div>
+            <div style="text-align:right">
+                <span class="status-badge status-${b.status}">${b.status}</span>
+                <p class="card-price" style="margin-top:0.5rem">₹${formatPrice(b.totalAmount)}</p>
+            </div>
+        </div>`).join('');
+}
+load().catch(e => document.getElementById('list').innerHTML = `<p class="error-msg">${e.message}</p>`);
+</script>
+</body>
+</html>

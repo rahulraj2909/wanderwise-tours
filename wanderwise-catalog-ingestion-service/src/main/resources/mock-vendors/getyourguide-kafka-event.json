@@ -1,0 +1,27 @@
+{
+  "eventType": "catalog.product.upsert",
+  "supplierId": "GETYOURGUIDE",
+  "occurredAt": "2026-05-31T10:00:00Z",
+  "payload": {
+    "id": "GYG-PAR-501",
+    "title": "Vendor: Montmartre Artists & Sacré-Cœur",
+    "shortDescription": "Kafka event payload — walking tour in Paris hills.",
+    "location": { "cityCode": "CTPARIS" },
+    "vertical": "EXPERIENCE",
+    "duration": { "hours": 3 },
+    "media": { "primaryImage": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80" },
+    "rating": { "average": 4.81, "count": 210 },
+    "options": [
+      {
+        "optionId": "OPT-EN",
+        "name": "English guided",
+        "description": "Small group in English."
+      }
+    ],
+    "travelerTypes": [
+      { "code": "ADULT", "label": "Adult", "fromAge": 18, "toAge": 64, "price": { "amount": 3599, "currency": "INR" } },
+      { "code": "SENIOR", "label": "Senior (65+)", "fromAge": 65, "toAge": 99, "price": { "amount": 3199, "currency": "INR" } },
+      { "code": "YOUTH", "label": "Youth (12-17)", "fromAge": 12, "toAge": 17, "price": { "amount": 2799, "currency": "INR" } }
+    ]
+  }
+}

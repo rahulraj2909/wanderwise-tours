@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reviews — WanderWise</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header" id="site-header"></header>
+<main class="container section">
+    <div class="breadcrumb"><a href="/">Home</a> / <a href="#" id="lnk-tour">Tour</a> / Reviews</div>
+    <div id="checkout-timer" class="checkout-timer" role="status" aria-live="polite"></div>
+    <div class="steps">
+        <span class="step done">1. Details</span>
+        <span class="step active">2. Reviews</span>
+        <span class="step">3. Checkout</span>
+        <span class="step">4. Payment</span>
+    </div>
+    <h2 class="section-title" id="title">Reviews</h2>
+    <div class="detail-grid">
+        <div class="panel" id="review-list"><p class="muted">Loading reviews...</p></div>
+        <div class="panel">
+            <h3>Write a review</h3>
+            <p class="muted" style="margin-bottom:1rem">Login required to post a review.</p>
+            <form id="review-form">
+                <div class="form-group">
+                    <label>Rating</label>
+                    <select id="rating" required>
+                        <option value="5">★★★★★ Excellent</option>
+                        <option value="4">★★★★☆ Good</option>
+                        <option value="3">★★★☆☆ Average</option>
+                        <option value="2">★★☆☆☆ Poor</option>
+                        <option value="1">★☆☆☆☆ Bad</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Your comment</label>
+                    <textarea id="comment" placeholder="Share your experience..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Submit review</button>
+                <p id="review-err" class="error-msg hidden"></p>
+            </form>
+            <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--border)">
+            <a href="#" id="btn-continue" class="btn btn-secondary btn-block">Continue to checkout →</a>
+        </div>
+    </div>
+</main>
+<footer class="footer" id="site-footer"></footer>
+<script src="/js/api.js?v=5"></script>
+<script src="/js/layout.js"></script>
+<script>
+const id = qs('id');
+if (!id) location.href = '/';
+
+let timerExpired = false;
+mountCheckoutTimer('checkout-timer', {
+    onExpired: () => {
+        timerExpired = true;
+        const btn = document.getElementById('btn-continue');
+        if (btn) {
+            btn.classList.add('disabled');
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.5';
+        }
+        document.getElementById('review-form')?.querySelectorAll('input, button, select, textarea')
+            .forEach(el => { el.disabled = true; });
+    }
+});
+
+document.getElementById('lnk-tour').href = '/tour.html?id=' + id;
+document.getElementById('btn-continue').href = '/checkout.html?id=' + id;
+document.getElementById('btn-continue').onclick = e => {
+    if (timerExpired) {
+        e.preventDefault();
+        alert('Reservation hold expired. Open the tour again to restart.');
+    }
+};
+
+async function loadReviews() {
+    const a = await api(`/attractions/${id}`);
+    document.getElementById('title').textContent = 'Reviews — ' + a.title;
+    document.getElementById('lnk-tour').textContent = a.title;
+
+    const page = await api(`/reviews/attraction/${id}?page=0&size=20`);
+    const list = document.getElementById('review-list');
+    const items = page.content || [];
+    list.innerHTML = items.length ? items.map(r => `
+        <div class="review-item">
+            <p class="review-stars">★ ${r.rating}/5</p>
+            <strong>${escapeHtml(r.userName)}</strong>
+            <p style="margin-top:0.35rem">${escapeHtml(r.comment || '')}</p>
+            <p class="muted" style="font-size:0.8rem;margin-top:0.25rem">${new Date(r.createdAt).toLocaleDateString()}</p>
+        </div>`).join('') : '<p class="muted">No reviews yet. Be the first!</p>';
+}
+
+document.getElementById('review-form').onsubmit = async e => {
+    e.preventDefault();
+    const err = document.getElementById('review-err');
+    err.classList.add('hidden');
+    try {
+        const me = await api('/auth/me');
+        if (!me) { requireLogin('/reviews.html?id=' + id); return; }
+        await api('/reviews', {
+            method: 'POST',
+            body: JSON.stringify({
+                attractionId: parseInt(id, 10),
+                rating: parseInt(document.getElementById('rating').value, 10),
+                comment: document.getElementById('comment').value
+            })
+        });
+        document.getElementById('comment').value = '';
+        loadReviews();
+        alert('Thank you! Your review has been published.');
+    } catch (ex) {
+        if (ex.status === 401) requireLogin('/reviews.html?id=' + id);
+        else { err.textContent = ex.message; err.classList.remove('hidden'); }
+    }
+};
+
+loadReviews();
+</script>
+</body>
+</html>

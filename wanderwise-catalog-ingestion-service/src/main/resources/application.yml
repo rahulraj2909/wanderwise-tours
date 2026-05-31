@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: wanderwise-catalog-ingestion-service
+  profiles:
+    active: h2
+  threads:
+    virtual:
+      enabled: false
+
+server:
+  port: 8081
+
+wanderwise:
+  booking:
+    base-url: http://localhost:8080
+  internal-secret: wanderwise-internal
+  admin-secret: wanderwise-admin
+
+# Scheduled catalog sync (catalog service only)
+ingestion:
+  scheduled:
+    enabled: true
+  scheduled-ingest-enabled: true
+  scheduled-update-enabled: true
+  scheduled-ingest-cron: "0 0 2 * * *"
+  scheduled-update-cron: "0 0 */6 * * *"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products — Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/admin/css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header admin-header">
+    <div class="container header-inner">
+        <a href="/admin/index.html" class="logo">⚙ <strong>WanderWise</strong> Admin</a>
+        <nav class="nav" id="admin-nav"></nav>
+    </div>
+</header>
+<main class="container section">
+    <h1>Catalog products</h1>
+    <p class="muted">View and edit tours shown on the customer site.</p>
+    <div class="search-bar" style="margin:1.5rem 0">
+        <input type="text" id="keyword" placeholder="Search title or description...">
+        <button type="button" class="btn btn-primary" id="btn-search">Search</button>
+    </div>
+    <div id="table-wrap"><p class="muted">Loading...</p></div>
+    <div class="action-row" id="pager"></div>
+</main>
+<script src="/admin/js/admin-api.js"></script>
+<script>
+if (!requireAdminLogin()) throw new Error();
+renderAdminNav('products');
+let page = 0;
+async function load() {
+    const kw = document.getElementById('keyword').value.trim();
+    let q = `?page=${page}&size=15`;
+    if (kw) q += `&keyword=${encodeURIComponent(kw)}`;
+    const data = await adminApi('/admin/catalog/products' + q);
+    const rows = (data.content || []).map(p => `
+        <tr>
+            <td>${p.id}</td>
+            <td><strong>${escapeHtml(p.title)}</strong><br><span class="muted">${escapeHtml(p.cityName)}</span></td>
+            <td>${p.type}</td>
+            <td>₹${formatPrice(p.price)}</td>
+            <td>★ ${p.averageRating} (${p.reviewCount})</td>
+            <td><a href="/admin/product-edit.html?id=${p.id}" class="btn btn-secondary btn-sm">Edit</a></td>
+        </tr>`).join('');
+    document.getElementById('table-wrap').innerHTML = `
+        <table class="data-table">
+            <thead><tr><th>ID</th><th>Product</th><th>Type</th><th>Price</th><th>Rating</th><th></th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="6">No products</td></tr>'}</tbody>
+        </table>`;
+    document.getElementById('pager').innerHTML = `
+        <button class="btn btn-secondary" ${data.first ? 'disabled' : ''} id="prev">← Prev</button>
+        <span class="muted">Page ${data.number + 1} / ${data.totalPages}</span>
+        <button class="btn btn-secondary" ${data.last ? 'disabled' : ''} id="next">Next →</button>`;
+    document.getElementById('prev')?.addEventListener('click', () => { page--; load(); });
+    document.getElementById('next')?.addEventListener('click', () => { page++; load(); });
+}
+document.getElementById('btn-search').onclick = () => { page = 0; load(); };
+load().catch(e => {
+    document.getElementById('table-wrap').innerHTML =
+        `<p class="error-msg">${escapeHtml(e.message)}</p>
+         <p class="muted">Sign in at <a href="/admin/login.html">admin login</a> with secret <code>wanderwise-admin</code>.</p>`;
+});
+</script>
+</body>
+</html>

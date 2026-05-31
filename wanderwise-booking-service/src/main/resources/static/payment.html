@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment — WanderWise</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header" id="site-header"></header>
+<main class="container section">
+    <div class="breadcrumb"><a href="/">Home</a> / Payment</div>
+    <div id="checkout-timer" class="checkout-timer" role="status" aria-live="polite"></div>
+    <div class="steps">
+        <span class="step done">1. Details</span>
+        <span class="step done">2. Reviews</span>
+        <span class="step done">3. Checkout</span>
+        <span class="step active">4. Payment</span>
+    </div>
+    <div class="panel" style="max-width:560px;margin:0 auto" id="content">
+        <h2>Complete payment</h2>
+        <p class="muted">Secure checkout (demo mode — no real card required)</p>
+        <div id="summary"></div>
+        <button type="button" class="btn btn-primary btn-block" id="btn-pay" style="margin-top:1.5rem">Pay now</button>
+        <p id="err" class="error-msg hidden"></p>
+    </div>
+</main>
+<footer class="footer" id="site-footer"></footer>
+<script src="/js/api.js?v=5"></script>
+<script src="/js/layout.js"></script>
+<script>
+const ref = qs('ref');
+if (!ref) location.href = '/';
+
+let timerExpired = false;
+mountCheckoutTimer('checkout-timer', {
+    onExpired: () => {
+        timerExpired = true;
+        const btn = document.getElementById('btn-pay');
+        if (btn) btn.disabled = true;
+    }
+});
+
+let booking = null;
+try { booking = JSON.parse(sessionStorage.getItem('pendingBooking') || 'null'); } catch (_) {}
+if (!booking || booking.bookingReference !== ref) {
+    api('/bookings/' + ref).then(b => { booking = b; render(); }).catch(() => location.href = '/');
+} else {
+    render();
+}
+
+function render() {
+    if (!booking) return;
+    const paxRows = (booking.paxLines || []).map(line => `
+        <div class="summary-row"><span>${escapeHtml(line.paxTypeLabel || line.paxTypeCode)} × ${line.quantity}</span>
+        <span>₹${formatPrice(line.lineTotal)}</span></div>`).join('');
+    document.getElementById('summary').innerHTML = `
+        <div class="summary-row"><span>Reference</span><span>${escapeHtml(booking.bookingReference)}</span></div>
+        <div class="summary-row"><span>Tour</span><span>${escapeHtml(booking.attractionTitle || '')}</span></div>
+        <div class="summary-row"><span>Visit</span><span>${booking.visitDate}</span></div>
+        ${paxRows || `<div class="summary-row"><span>Guests</span><span>${booking.guests}</span></div>`}
+        <div class="summary-row total"><span>Amount due</span><span>₹${formatPrice(booking.totalAmount)}</span></div>`;
+}
+
+document.getElementById('btn-pay').onclick = async () => {
+    if (timerExpired) {
+        alert('Reservation hold expired. Start a new booking from the tour page.');
+        return;
+    }
+    const btn = document.getElementById('btn-pay');
+    const err = document.getElementById('err');
+    err.classList.add('hidden');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+    try {
+        const paid = await api('/payments/mock-checkout?bookingRef=' + encodeURIComponent(ref));
+        clearCheckoutDeadline();
+        sessionStorage.removeItem('pendingBooking');
+        sessionStorage.setItem('lastBooking', JSON.stringify(paid));
+        location.href = '/success.html?ref=' + encodeURIComponent(ref);
+    } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Pay now';
+    }
+};
+</script>
+</body>
+</html>

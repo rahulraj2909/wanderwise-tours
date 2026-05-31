@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit product — Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/admin/css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header admin-header">
+    <div class="container header-inner">
+        <a href="/admin/index.html" class="logo">⚙ <strong>WanderWise</strong> Admin</a>
+        <nav class="nav" id="admin-nav"></nav>
+    </div>
+</header>
+<main class="container section">
+    <div class="breadcrumb"><a href="/admin/products.html">Products</a> / Edit</div>
+    <h1>Edit product</h1>
+    <form id="form" class="panel" style="margin-top:1.5rem;max-width:640px">
+        <div class="form-group"><label>Title</label><input id="title" required></div>
+        <div class="form-group"><label>Description</label><textarea id="description" rows="4"></textarea></div>
+        <div class="form-group"><label>Type</label>
+            <select id="type">
+                <option>TOUR</option><option>ADVENTURE</option><option>ATTRACTION</option>
+                <option>ACTIVITY</option><option>DAY_TRIP</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Price (INR)</label><input type="number" id="price" step="0.01" required></div>
+        <div class="form-group"><label>Duration (hours)</label><input type="number" id="duration" min="1" required></div>
+        <div class="form-group"><label>Image URL</label><input id="imageUrl" type="url"></div>
+        <div class="form-group"><label>City</label><select id="cityId" required></select></div>
+        <div class="form-group"><label>Category</label><select id="categoryId" required></select></div>
+        <div class="form-group"><label><input type="checkbox" id="active"> Active on customer site</label></div>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <p id="msg" class="muted" style="margin-top:1rem"></p>
+    </form>
+</main>
+<script src="/admin/js/admin-api.js"></script>
+<script>
+if (!requireAdminLogin()) throw new Error();
+renderAdminNav('products');
+const id = new URLSearchParams(location.search).get('id');
+if (!id) location.href = '/admin/products.html';
+
+async function boot() {
+    const [p, cities, cats] = await Promise.all([
+        adminApi('/admin/catalog/products/' + id),
+        fetch('/api/v1/cities').then(r => r.json()).then(j => j.data),
+        fetch('/api/v1/categories').then(r => r.json()).then(j => j.data)
+    ]);
+    cities.forEach(c => document.getElementById('cityId').innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`);
+    cats.forEach(c => document.getElementById('categoryId').innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`);
+    document.getElementById('title').value = p.title;
+    document.getElementById('description').value = p.description || '';
+    document.getElementById('type').value = p.type;
+    document.getElementById('price').value = p.price;
+    document.getElementById('duration').value = p.durationHours;
+    document.getElementById('imageUrl').value = p.imageUrl || '';
+    document.getElementById('cityId').value = p.cityId;
+    document.getElementById('categoryId').value = p.categoryId;
+    document.getElementById('active').checked = p.active !== false;
+}
+
+document.getElementById('form').onsubmit = async (e) => {
+    e.preventDefault();
+    const body = {
+        title: document.getElementById('title').value,
+        description: document.getElementById('description').value,
+        type: document.getElementById('type').value,
+        price: Number(document.getElementById('price').value),
+        currency: 'INR',
+        durationHours: Number(document.getElementById('duration').value),
+        imageUrl: document.getElementById('imageUrl').value,
+        cityId: Number(document.getElementById('cityId').value),
+        categoryId: Number(document.getElementById('categoryId').value),
+        active: document.getElementById('active').checked
+    };
+    await adminApi('/admin/catalog/products/' + id, { method: 'PUT', body: JSON.stringify(body) });
+    document.getElementById('msg').textContent = 'Saved. Changes appear on customer site after cache refresh.';
+};
+boot().catch(e => alert(e.message));
+</script>
+</body>
+</html>

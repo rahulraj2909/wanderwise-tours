@@ -1,0 +1,37 @@
+# Build output
+target/
+data/
+*.log
+
+# Local / secrets
+.env
+.env.*
+
+# IDE
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+.DS_Store
+
+# Bundled JDK (do not commit)
+.tools/
+
+# --- Not application code (thesis / docs / images) ---
+docs/
+scripts/
+*.md
+*.docx
+*.pdf
+
+# Diagrams & screenshots
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+
+# Legacy monolith (superseded by wanderwise-* modules)
+/src/

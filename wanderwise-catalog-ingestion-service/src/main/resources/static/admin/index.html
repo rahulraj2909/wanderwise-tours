@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — WanderWise Catalog</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/admin/css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header admin-header">
+    <div class="container header-inner">
+        <a href="/admin/index.html" class="logo">⚙ <strong>WanderWise</strong> Admin</a>
+        <nav class="nav" id="admin-nav"></nav>
+    </div>
+</header>
+<main class="container section">
+    <h1>Catalog &amp; ingestion portal</h1>
+    <p class="muted">Manage catalog products and run vendor ingestion for the marketplace.</p>
+
+    <div class="stat-cards">
+        <div class="stat-card"><h3>Products in catalog</h3><p id="stat-products">—</p></div>
+        <div class="stat-card"><h3>Active vendors</h3><p id="stat-vendors">—</p></div>
+    </div>
+
+    <div class="panel">
+        <h2>Quick actions</h2>
+        <div class="action-row">
+            <a href="/admin/products.html" class="btn btn-primary">Browse &amp; edit products</a>
+            <a href="/admin/ingestion.html" class="btn btn-secondary">Run vendor ingestion</a>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top:1.5rem">
+        <h2>Scheduled jobs (cron)</h2>
+        <ul style="margin:1rem 0 0 1.25rem;color:var(--muted)">
+            <li><strong>Daily 2:00 AM</strong> — ingest new products from DIRECT_PULL vendors</li>
+            <li><strong>Every 6 hours</strong> — update prices/details for existing products</li>
+        </ul>
+    </div>
+</main>
+<script src="/admin/js/admin-api.js"></script>
+<script>
+if (!requireAdminLogin()) throw new Error();
+renderAdminNav('dashboard');
+(async () => {
+    const [products, vendors] = await Promise.all([
+        adminApi('/admin/catalog/products?page=0&size=1'),
+        adminApi('/admin/ingestion/vendors')
+    ]);
+    document.getElementById('stat-products').textContent = products.totalElements ?? '—';
+    document.getElementById('stat-vendors').textContent = vendors.length ?? '—';
+})().catch(e => alert(e.message));
+</script>
+</body>
+</html>

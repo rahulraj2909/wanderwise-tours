@@ -1,0 +1,29 @@
+# Full stack for report/demo: MySQL + Redis (requires docker compose up -d)
+# Run: mvn spring-boot:run -Dspring-boot.run.profiles=full
+
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:tours_attractions}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${DB_USER:tours}
+    password: ${DB_PASSWORD:tours123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cache:
+    type: redis
+    cache-names: attractions, attractionDetail, cities, categories
+
+stripe:
+  enabled: false
+
+logging:
+  level:
+    com.neovarsity.toursattractions.scheduler: INFO

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WanderWise — Tours &amp; Attractions</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header" id="site-header"></header>
+
+<section class="hero">
+    <div class="container">
+        <h1>Discover Tours &amp; Attractions</h1>
+        <p>Book desert safaris, city tours, and activities — search by city, pick a slot, and pay securely.</p>
+        <div class="search-bar">
+            <input type="text" id="keyword" placeholder="Search experiences...">
+            <select id="cityId"><option value="">All cities</option></select>
+            <select id="categoryId"><option value="">All categories</option></select>
+            <button type="button" class="btn btn-primary" id="btn-search">Search</button>
+        </div>
+    </div>
+</section>
+
+<section class="container section">
+    <h2 class="section-title">Popular destinations</h2>
+    <p class="muted">Browse city listings with ranking, price sort and pagination</p>
+    <div id="city-chips" class="city-chips"></div>
+</section>
+
+<main class="container section">
+    <h2 class="section-title">Top experiences</h2>
+    <p id="loading" class="muted">Loading tours...</p>
+    <div id="grid" class="grid"></div>
+</main>
+
+<footer class="footer" id="site-footer"></footer>
+<script src="/js/api.js?v=3"></script>
+<script src="/js/layout.js?v=3"></script>
+<script>
+let allCities = [];
+
+document.getElementById('btn-search').onclick = goToListing;
+document.getElementById('keyword').onkeydown = e => { if (e.key === 'Enter') goToListing(); };
+
+function goToListing() {
+    const params = new URLSearchParams({ stype: 'CITY', sort: 'popularity', page: '0' });
+    const kw = document.getElementById('keyword').value.trim();
+    const cityId = document.getElementById('cityId').value;
+    const cat = document.getElementById('categoryId').value;
+    if (kw) params.set('keyword', kw);
+    if (cat) params.set('categoryId', cat);
+    const city = allCities.find(c => String(c.id) === cityId);
+    if (city && city.code) params.set('scode', city.code);
+    else if (cityId) params.set('cityId', cityId);
+    else params.set('scode', 'CTSINGAP');
+    window.location.href = '/listing.html?' + params.toString();
+}
+
+async function initFilters() {
+    const [cities, cats] = await Promise.all([api('/cities'), api('/categories')]);
+    allCities = Array.isArray(cities) ? cities : [];
+    const categories = Array.isArray(cats) ? cats : [];
+    allCities.forEach(c => document.getElementById('cityId').innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`);
+    categories.forEach(c => document.getElementById('categoryId').innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`);
+    const chips = document.getElementById('city-chips');
+    chips.innerHTML = allCities.filter(c => c.code).map(c =>
+        `<a class="city-chip" href="/listing.html?stype=CITY&scode=${encodeURIComponent(c.code)}&sort=popularity">` +
+        `${escapeHtml(c.name)}</a>`).join('');
+}
+
+async function loadTours() {
+    const grid = document.getElementById('grid');
+    const loading = document.getElementById('loading');
+    loading.classList.remove('hidden');
+    grid.innerHTML = '';
+    let q = '?page=0&size=12&sort=popularity';
+    const kw = document.getElementById('keyword').value.trim();
+    const city = document.getElementById('cityId').value;
+    const cat = document.getElementById('categoryId').value;
+    if (kw) q += `&keyword=${encodeURIComponent(kw)}`;
+    if (city) q += `&cityId=${city}`;
+    if (cat) q += `&categoryId=${cat}`;
+    try {
+        const page = await api('/attractions' + q);
+        loading.classList.add('hidden');
+        grid.innerHTML = (page.content || []).map(a => `
+            <article class="card">
+                <div class="card-img${a.imageUrl ? '' : ' no-img'}">
+                    <img src="${tourImageSrc(a.imageUrl)}" alt="" loading="lazy" onerror="onTourImgError(this)">
+                    <span class="badge">${a.type}</span>
+                </div>
+                <div class="card-body">
+                    <h3>${escapeHtml(a.title)}</h3>
+                    <p class="card-meta">${escapeHtml(a.cityName)} · ${a.durationHours}h</p>
+                    <p class="card-price">₹${formatPrice(a.price)} <small style="font-weight:500;color:var(--muted)">/ person</small></p>
+                    <p class="card-rating">★ ${a.averageRating} (${a.reviewCount} reviews)</p>
+                    <div class="card-actions">
+                        <a href="/tour.html?id=${a.id}" class="btn btn-secondary">View details</a>
+                    </div>
+                </div>
+            </article>`).join('') || '<p class="muted">No tours found.</p>';
+    } catch (e) {
+        loading.textContent = e.message;
+    }
+}
+async function boot() {
+    const loading = document.getElementById('loading');
+    const grid = document.getElementById('grid');
+    try {
+        await Promise.all([
+            initFilters().catch(err => {
+                console.warn('Filters failed:', err);
+                document.getElementById('city-chips').innerHTML =
+                    '<p class="muted">Filters unavailable — catalog may be offline.</p>';
+            }),
+            loadTours()
+        ]);
+    } catch (e) {
+        loading.classList.remove('hidden');
+        loading.innerHTML = 'Could not load tours. <strong>' + escapeHtml(e.message) + '</strong><br><br>' +
+            'Start <strong>catalog</strong> on port 8081, then <strong>booking</strong> on 8080. ' +
+            '<a href="/api/health/catalog">Check catalog connection</a>';
+        grid.innerHTML = '';
+    }
+}
+boot();
+</script>
+</body>
+</html>

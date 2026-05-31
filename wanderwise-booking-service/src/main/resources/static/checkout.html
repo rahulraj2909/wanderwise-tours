@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout — WanderWise</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/css/style.css?v=4">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header" id="site-header"></header>
+<main class="container section">
+    <div class="breadcrumb"><a href="/">Home</a> / <a href="#" id="lnk-tour">Tour</a> / Checkout</div>
+    <div id="checkout-timer" class="checkout-timer" role="status" aria-live="polite"></div>
+    <div class="steps">
+        <span class="step done">1. Details</span>
+        <span class="step done">2. Reviews</span>
+        <span class="step active">3. Checkout</span>
+        <span class="step">4. Payment</span>
+    </div>
+    <div class="detail-grid" id="content"><p class="muted">Loading...</p></div>
+</main>
+<footer class="footer" id="site-footer"></footer>
+<script src="/js/api.js?v=5"></script>
+<script src="/js/layout.js?v=3"></script>
+<script>
+const id = qs('id');
+if (!id) location.href = '/';
+
+let timerExpired = false;
+mountCheckoutTimer('checkout-timer', {
+    onExpired: () => {
+        timerExpired = true;
+        const form = document.getElementById('book-form');
+        if (form) {
+            form.querySelectorAll('input, button, select').forEach(el => { el.disabled = true; });
+        }
+    }
+});
+
+async function init() {
+    const me = await api('/auth/me').catch(() => null);
+    if (!me) {
+        requireLogin('/checkout.html?id=' + id);
+        return;
+    }
+
+    const [a, slots, paxTypes] = await Promise.all([
+        api(`/attractions/${id}`),
+        api(`/attractions/${id}/slots`),
+        api(`/attractions/${id}/pax-types`).catch(() => [])
+    ]);
+    const hasPax = Array.isArray(paxTypes) && paxTypes.length > 0;
+
+    document.getElementById('lnk-tour').href = '/tour.html?id=' + id;
+    document.getElementById('lnk-tour').textContent = a.title;
+
+    const slotsHtml = slots.length ? slots.map((s, i) => `
+        <label class="slot-option">
+            <input type="radio" name="slot" value="${s.id}" ${i === 0 ? 'checked' : ''}>
+            <span>${s.slotDate} at ${s.startTime} — <strong>${s.availableSeats}</strong> seats left</span>
+        </label>`).join('') : '<p class="muted">No time slots — booking without slot.</p>';
+
+    const defaultDate = slots[0]?.slotDate || new Date().toISOString().slice(0, 10);
+
+    const paxHtml = hasPax ? `
+        <div class="form-group pax-form-group">
+            <label>Travellers</label>
+            <div class="pax-list">
+            ${paxTypes.map(p => `
+                <div class="pax-row">
+                    <div class="pax-info">
+                        <span class="pax-label">${escapeHtml(p.label)}</span>
+                        <span class="pax-meta muted">₹${formatPrice(p.price)}${p.minAge != null ? ` · ages ${p.minAge}–${p.maxAge}` : ''}</span>
+                    </div>
+                    <input type="number" id="pax-${p.code}" class="pax-qty" data-code="${escapeHtml(p.code)}"
+                           data-price="${p.price}" min="0" max="15" value="${p.code === 'ADULT' ? 2 : 0}"
+                           aria-label="${escapeHtml(p.label)} quantity">
+                </div>`).join('')}
+            </div>
+        </div>` : `
+        <div class="form-group">
+            <label>Guests</label>
+            <input type="number" id="guests" min="1" max="15" value="2" required>
+        </div>`;
+
+    const priceHint = hasPax ? '' : `<p class="price-big">₹${formatPrice(a.price)} / person</p>`;
+
+    document.getElementById('content').innerHTML = `
+        <div class="panel">
+            <h2>Booking details</h2>
+            <p class="card-meta">${escapeHtml(a.title)} · ${escapeHtml(a.cityName)}</p>
+            ${priceHint}
+            <form id="book-form">
+                <div class="form-group">
+                    <label>Visit date</label>
+                    <input type="date" id="visitDate" value="${defaultDate}" required>
+                </div>
+                ${paxHtml}
+                ${slots.length ? `<div class="form-group"><label>Time slot</label>${slotsHtml}</div>` : ''}
+                <div class="form-group">
+                    <label>Contact email</label>
+                    <input type="email" id="email" value="${escapeHtml(me.email)}" required>
+                </div>
+                <div class="summary-row total"><span>Estimated total</span><span id="total">₹0</span></div>
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top:1.5rem" id="btn-submit">Continue to payment →</button>
+                <p id="err" class="error-msg hidden"></p>
+            </form>
+        </div>
+        <div class="panel">
+            <h3>Order summary</h3>
+            <div class="summary-row"><span>Tour</span><span>${escapeHtml(a.title)}</span></div>
+            <div class="summary-row"><span>Duration</span><span>${a.durationHours} hours</span></div>
+            <div class="summary-row"><span>Logged in as</span><span>${escapeHtml(me.name)}</span></div>
+            <p class="muted" style="margin-top:1rem;font-size:0.85rem">Secure checkout · Free cancellation on select tours</p>
+        </div>`;
+
+    const updateTotal = () => {
+        let total = 0;
+        if (hasPax) {
+            document.querySelectorAll('.pax-qty').forEach(el => {
+                total += parseFloat(el.dataset.price) * (parseInt(el.value, 10) || 0);
+            });
+        } else {
+            const guests = document.getElementById('guests');
+            total = parseFloat(a.price) * (parseInt(guests.value, 10) || 1);
+        }
+        document.getElementById('total').textContent = '₹' + formatPrice(total);
+    };
+
+    if (hasPax) {
+        document.querySelectorAll('.pax-qty').forEach(el => { el.oninput = updateTotal; });
+    } else {
+        document.getElementById('guests').oninput = updateTotal;
+    }
+    updateTotal();
+
+    document.getElementById('book-form').onsubmit = async e => {
+        e.preventDefault();
+        if (timerExpired) return;
+        const err = document.getElementById('err');
+        err.classList.add('hidden');
+        const payload = {
+            attractionId: parseInt(id, 10),
+            visitDate: document.getElementById('visitDate').value,
+            contactEmail: document.getElementById('email').value
+        };
+        if (hasPax) {
+            payload.paxSelections = [...document.querySelectorAll('.pax-qty')]
+                .map(el => ({ paxTypeCode: el.dataset.code, quantity: parseInt(el.value, 10) || 0 }))
+                .filter(s => s.quantity > 0);
+            if (!payload.paxSelections.length) {
+                err.textContent = 'Select at least one traveller.';
+                err.classList.remove('hidden');
+                return;
+            }
+            payload.guests = payload.paxSelections.reduce((sum, s) => sum + s.quantity, 0);
+        } else {
+            payload.guests = parseInt(document.getElementById('guests').value, 10);
+        }
+        const slot = document.querySelector('input[name="slot"]:checked');
+        if (slot) payload.timeSlotId = parseInt(slot.value, 10);
+        try {
+            const booking = await api('/bookings', { method: 'POST', body: JSON.stringify(payload) });
+            sessionStorage.setItem('pendingBooking', JSON.stringify(booking));
+            location.href = '/payment.html?ref=' + encodeURIComponent(booking.bookingReference);
+        } catch (ex) {
+            err.textContent = ex.message;
+            err.classList.remove('hidden');
+        }
+    };
+}
+init();
+</script>
+</body>
+</html>

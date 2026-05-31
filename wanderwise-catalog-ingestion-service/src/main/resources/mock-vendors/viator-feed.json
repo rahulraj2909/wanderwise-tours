@@ -1,0 +1,60 @@
+{
+  "supplier": "VIATOR",
+  "products": [
+    {
+      "productCode": "VTR-SG-001",
+      "productName": "Vendor: Marina Bay Night Photo Walk",
+      "summary": "Ingested from Viator-style API — evening photography tour.",
+      "destinationCode": "CTSINGAP",
+      "category": "Culture",
+      "productType": "TOUR",
+      "durationHours": 3,
+      "heroImage": "https://images.unsplash.com/photo-1613498802570-94a04eece583?w=800&q=80",
+      "rating": 4.72,
+      "reviewCount": 88,
+      "activities": [
+        {
+          "activityId": "ACT-EVENING",
+          "name": "Evening session",
+          "details": "Meet at Marina Bay Sands hotel lobby."
+        }
+      ],
+      "pricing": {
+        "currency": "INR",
+        "adult": 2499,
+        "child": 1499,
+        "infant": 0
+      }
+    },
+    {
+      "productCode": "VTR-SG-002",
+      "productName": "Vendor: Little India Spice & Temple Trail",
+      "summary": "Walking tour with temple visit and spice market.",
+      "destinationCode": "CTSINGAP",
+      "category": "Food",
+      "productType": "TOUR",
+      "durationHours": 4,
+      "heroImage": "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=80",
+      "rating": 4.65,
+      "reviewCount": 54,
+      "activities": [
+        {
+          "activityId": "ACT-MORNING",
+          "name": "Morning trail",
+          "details": "Starts 9 AM at Tekka Centre."
+        },
+        {
+          "activityId": "ACT-AFTERNOON",
+          "name": "Afternoon trail",
+          "details": "Starts 2 PM with tea tasting."
+        }
+      ],
+      "pricing": {
+        "currency": "INR",
+        "adult": 1899,
+        "child": 999,
+        "infant": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor ingestion — Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/admin/css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header admin-header">
+    <div class="container header-inner">
+        <a href="/admin/index.html" class="logo">⚙ <strong>WanderWise</strong> Admin</a>
+        <nav class="nav" id="admin-nav"></nav>
+    </div>
+</header>
+<main class="container section">
+    <h1>Vendor ingestion</h1>
+    <p class="muted">Pull vendor feeds into the catalog. Cron runs ingest/update automatically; use buttons here for manual runs.</p>
+
+    <div id="vendors" class="grid" style="margin-top:1.5rem"></div>
+
+    <div class="panel" style="margin-top:2rem">
+        <h2>Recent runs</h2>
+        <p class="muted">Select a vendor above and click “View runs”, or run an action first.</p>
+        <div id="runs"><p class="muted">—</p></div>
+    </div>
+</main>
+<script src="/admin/js/admin-api.js"></script>
+<script>
+if (!requireAdminLogin()) throw new Error();
+renderAdminNav('ingestion');
+
+async function runAction(code, action) {
+    const path = action === 'pull' ? 'pull' : action === 'ingest' ? 'ingest' : action === 'update' ? 'update' : 'simulate-kafka';
+    const method = 'POST';
+    const run = await adminApi(`/admin/ingestion/vendors/${code}/${path}`, { method });
+    alert(action === 'kafka' ? 'Kafka event published' : `Done: created ${run.productsCreated ?? 0}, updated ${run.productsUpdated ?? 0}`);
+    showRuns(code);
+}
+
+async function showRuns(code) {
+    const runs = await adminApi(`/admin/ingestion/vendors/${code}/runs`);
+    document.getElementById('runs').innerHTML = `
+        <h3 style="margin-bottom:0.75rem">${code} runs</h3>
+        <table class="data-table">
+            <thead><tr><th>When</th><th>Type</th><th>Status</th><th>Received</th><th>Created</th><th>Updated</th></tr></thead>
+            <tbody>${(runs || []).map(r => `
+                <tr>
+                    <td>${r.startedAt ? new Date(r.startedAt).toLocaleString() : '—'}</td>
+                    <td>${r.runType || '—'}</td>
+                    <td>${r.status}</td>
+                    <td>${r.productsReceived ?? 0}</td>
+                    <td>${r.productsCreated ?? 0}</td>
+                    <td>${r.productsUpdated ?? 0}</td>
+                </tr>`).join('') || '<tr><td colspan="6">No runs yet</td></tr>'}</tbody>
+        </table>`;
+}
+
+(async () => {
+    const vendors = await adminApi('/admin/ingestion/vendors');
+    document.getElementById('vendors').innerHTML = vendors.map(v => `
+        <article class="panel card" style="padding:1.25rem">
+            <h3>${escapeHtml(v.name)} <span class="muted">(${v.code})</span></h3>
+            <p class="card-meta">Channel: ${v.ingestionChannel}</p>
+            <div class="action-row">
+                ${v.ingestionChannel === 'DIRECT_PULL' ? `
+                    <button class="btn btn-primary btn-sm" data-code="${v.code}" data-action="pull">Full pull</button>
+                    <button class="btn btn-secondary btn-sm" data-code="${v.code}" data-action="ingest">Ingest new</button>
+                    <button class="btn btn-secondary btn-sm" data-code="${v.code}" data-action="update">Update existing</button>
+                ` : `
+                    <button class="btn btn-primary btn-sm" data-code="${v.code}" data-action="kafka">Simulate Kafka</button>
+                `}
+                <button class="btn btn-secondary btn-sm" data-code="${v.code}" data-action="runs">View runs</button>
+            </div>
+        </article>`).join('');
+    document.querySelectorAll('[data-action]').forEach(btn => {
+        btn.onclick = () => {
+            const code = btn.dataset.code;
+            const action = btn.dataset.action;
+            if (action === 'runs') showRuns(code);
+            else runAction(code, action);
+        };
+    });
+})().catch(e => alert(e.message));
+</script>
+</body>
+</html>

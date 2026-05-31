@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin login — WanderWise</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/admin/css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<main class="container section">
+    <div class="login-box">
+        <h1 style="margin-bottom:0.5rem">WanderWise <span class="admin-badge">ADMIN</span></h1>
+        <p class="muted" style="margin-bottom:1.5rem">Catalog &amp; ingestion portal (port 8081)</p>
+        <form id="login-form">
+            <div class="form-group">
+                <label>Admin secret</label>
+                <input type="password" id="secret" placeholder="Default: wanderwise-admin" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+            <p id="err" class="error-msg hidden" style="margin-top:1rem"></p>
+        </form>
+        <p class="muted" style="margin-top:1rem;font-size:0.85rem">Demo secret: <code>wanderwise-admin</code></p>
+    </div>
+</main>
+<script>
+document.getElementById('login-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const secret = document.getElementById('secret').value;
+    try {
+        const res = await fetch('/api/v1/admin/ingestion/vendors', {
+            headers: { 'X-Admin-Secret': secret }
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.message || 'Invalid secret');
+        sessionStorage.setItem('adminSecret', secret);
+        const redirect = new URLSearchParams(location.search).get('redirect') || '/admin/index.html';
+        location.href = redirect;
+    } catch (err) {
+        const el = document.getElementById('err');
+        el.textContent = err.message;
+        el.classList.remove('hidden');
+    }
+};
+</script>
+</body>
+</html>

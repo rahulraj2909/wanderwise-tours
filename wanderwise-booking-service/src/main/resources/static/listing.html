@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tours Listing — WanderWise</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header" id="site-header"></header>
+
+<section class="listing-hero">
+    <div class="container">
+        <nav class="breadcrumb" id="breadcrumb">
+            <a href="/">Home</a> <span>›</span> <span id="crumb-city">Tours</span>
+        </nav>
+        <h1 id="listing-title">Tours &amp; Attractions</h1>
+        <p id="listing-subtitle" class="muted"></p>
+    </div>
+</section>
+
+<main class="container listing-layout">
+    <aside class="listing-sidebar">
+        <h3>Filters</h3>
+        <label class="field-label">Search</label>
+        <input type="text" id="keyword" class="field-input" placeholder="Experience name...">
+
+        <label class="field-label">Category</label>
+        <select id="categoryId" class="field-input"><option value="">All categories</option></select>
+
+        <label class="field-label">Type</label>
+        <select id="type" class="field-input">
+            <option value="">All types</option>
+            <option value="ATTRACTION">Attraction</option>
+            <option value="ACTIVITY">Activity</option>
+            <option value="ADVENTURE">Adventure</option>
+            <option value="TOUR">Tour</option>
+            <option value="DAY_TRIP">Day trip</option>
+        </select>
+
+        <button type="button" class="btn btn-primary btn-block" id="btn-apply">Apply filters</button>
+        <a href="/" class="btn btn-secondary btn-block" style="margin-top:0.5rem;text-align:center">Back to home</a>
+    </aside>
+
+    <section class="listing-main">
+        <div class="listing-toolbar">
+            <p id="result-count" class="result-count"></p>
+            <div class="sort-bar" role="group" aria-label="Sort tours">
+                <span class="sort-label">Sort by:</span>
+                <button type="button" class="sort-chip active" data-sort="popularity">Popularity</button>
+                <button type="button" class="sort-chip" data-sort="rating">Rating</button>
+                <button type="button" class="sort-chip" data-sort="price_asc">Price: Low to High</button>
+                <button type="button" class="sort-chip" data-sort="price_desc">Price: High to Low</button>
+                <button type="button" class="sort-chip" data-sort="reviews">Most reviewed</button>
+            </div>
+        </div>
+
+        <p id="loading" class="muted">Loading experiences...</p>
+        <div id="grid" class="grid"></div>
+
+        <nav class="pagination" id="pagination" aria-label="Page navigation"></nav>
+    </section>
+</main>
+
+<footer class="footer" id="site-footer"></footer>
+<script src="/js/api.js?v=3"></script>
+<script src="/js/layout.js?v=3"></script>
+<script>
+const PAGE_SIZE = 9;
+let state = {
+    stype: qs('stype') || 'CITY',
+    scode: qs('scode') || 'CTSINGAP',
+    cityId: qs('cityId'),
+    sort: qs('sort') || 'popularity',
+    page: parseInt(qs('page') || '0', 10),
+    keyword: qs('keyword') || '',
+    categoryId: qs('categoryId') || '',
+    type: qs('type') || '',
+};
+
+function syncUrl() {
+    const p = new URLSearchParams();
+    if (state.stype) p.set('stype', state.stype);
+    if (state.scode) p.set('scode', state.scode);
+    if (state.cityId) p.set('cityId', state.cityId);
+    p.set('sort', state.sort);
+    p.set('page', String(state.page));
+    if (state.keyword) p.set('keyword', state.keyword);
+    if (state.categoryId) p.set('categoryId', state.categoryId);
+    if (state.type) p.set('type', state.type);
+    history.replaceState(null, '', '/listing.html?' + p.toString());
+}
+
+function setActiveSortChip() {
+    document.querySelectorAll('.sort-chip').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sort === state.sort);
+    });
+}
+
+document.querySelectorAll('.sort-chip').forEach(btn => {
+    btn.onclick = () => {
+        state.sort = btn.dataset.sort;
+        state.page = 0;
+        setActiveSortChip();
+        syncUrl();
+        loadListing();
+    };
+});
+
+document.getElementById('btn-apply').onclick = () => {
+    state.keyword = document.getElementById('keyword').value.trim();
+    state.categoryId = document.getElementById('categoryId').value;
+    state.type = document.getElementById('type').value;
+    state.page = 0;
+    syncUrl();
+    loadListing();
+};
+
+document.getElementById('keyword').onkeydown = e => {
+    if (e.key === 'Enter') document.getElementById('btn-apply').click();
+};
+
+function renderPagination(page) {
+    const nav = document.getElementById('pagination');
+    const total = page.totalPages || 0;
+    const current = page.number ?? 0;
+    if (total <= 1) {
+        nav.innerHTML = '';
+        return;
+    }
+    let html = '';
+    html += `<button type="button" class="page-btn" ${current === 0 ? 'disabled' : ''} data-page="${current - 1}">‹ Prev</button>`;
+    const start = Math.max(0, current - 2);
+    const end = Math.min(total - 1, current + 2);
+    for (let i = start; i <= end; i++) {
+        html += `<button type="button" class="page-btn ${i === current ? 'active' : ''}" data-page="${i}">${i + 1}</button>`;
+    }
+    html += `<button type="button" class="page-btn" ${current >= total - 1 ? 'disabled' : ''} data-page="${current + 1}">Next ›</button>`;
+    nav.innerHTML = html;
+    nav.querySelectorAll('.page-btn:not([disabled])').forEach(b => {
+        b.onclick = () => {
+            state.page = parseInt(b.dataset.page, 10);
+            syncUrl();
+            loadListing();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+    });
+}
+
+async function loadCityHeader() {
+    if (state.cityId) {
+        const cities = await api('/cities');
+        const c = cities.find(x => String(x.id) === String(state.cityId));
+        if (c) {
+            document.getElementById('listing-title').textContent = 'Tours in ' + c.name;
+            document.getElementById('listing-subtitle').textContent = c.description || c.country;
+            document.getElementById('crumb-city').textContent = c.name;
+            if (c.code) state.scode = c.code;
+        }
+        return;
+    }
+    if (state.scode && state.stype === 'CITY') {
+        try {
+            const c = await api('/cities/code/' + encodeURIComponent(state.scode));
+            document.getElementById('listing-title').textContent = 'Tours in ' + c.name;
+            document.getElementById('listing-subtitle').textContent = c.description || c.country;
+            document.getElementById('crumb-city').textContent = c.name;
+            state.cityId = String(c.id);
+        } catch (e) {
+            document.getElementById('listing-subtitle').textContent = 'City code: ' + state.scode;
+        }
+    }
+}
+
+async function loadListing() {
+    const grid = document.getElementById('grid');
+    const loading = document.getElementById('loading');
+    loading.classList.remove('hidden');
+    grid.innerHTML = '';
+
+    let q = `?page=${state.page}&size=${PAGE_SIZE}&sort=${encodeURIComponent(state.sort)}`;
+    if (state.scode) q += `&scode=${encodeURIComponent(state.scode)}`;
+    if (state.cityId && !state.scode) q += `&cityId=${state.cityId}`;
+    if (state.keyword) q += `&keyword=${encodeURIComponent(state.keyword)}`;
+    if (state.categoryId) q += `&categoryId=${state.categoryId}`;
+    if (state.type) q += `&type=${state.type}`;
+
+    try {
+        const page = await api('/attractions' + q);
+        loading.classList.add('hidden');
+        const items = page.content || [];
+        document.getElementById('result-count').textContent =
+            `${page.totalElements ?? items.length} experiences · Page ${(page.number ?? 0) + 1} of ${Math.max(page.totalPages || 1, 1)}`;
+
+        grid.innerHTML = items.map((a, i) => `
+            <article class="card">
+                <div class="card-img${a.imageUrl ? '' : ' no-img'}">
+                    <img src="${tourImageSrc(a.imageUrl)}" alt="" loading="lazy"
+                         onerror="onTourImgError(this)">
+                    <span class="badge">${a.type}</span>
+                    ${i < 3 && state.sort === 'popularity' ? '<span class="rank-badge">#' + (state.page * PAGE_SIZE + i + 1) + '</span>' : ''}
+                </div>
+                <div class="card-body">
+                    <h3>${escapeHtml(a.title)}</h3>
+                    <p class="card-meta">${escapeHtml(a.cityName)} · ${a.durationHours}h · ${escapeHtml(a.categoryName || '')}</p>
+                    <p class="card-price">₹${formatPrice(a.price)} <small style="font-weight:500;color:var(--muted)">/ person</small></p>
+                    <p class="card-rating">★ ${a.averageRating} · ${a.reviewCount} reviews</p>
+                    <div class="card-actions">
+                        <a href="/tour.html?id=${a.id}" class="btn btn-secondary">View details</a>
+                    </div>
+                </div>
+            </article>`).join('') || '<p class="muted">No tours match your filters.</p>';
+
+        renderPagination(page);
+    } catch (e) {
+        loading.textContent = e.message;
+    }
+}
+
+async function initFilters() {
+    document.getElementById('keyword').value = state.keyword;
+    const cats = await api('/categories');
+    const sel = document.getElementById('categoryId');
+    cats.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        if (String(c.id) === String(state.categoryId)) opt.selected = true;
+        sel.appendChild(opt);
+    });
+    document.getElementById('type').value = state.type;
+}
+
+async function boot() {
+    setActiveSortChip();
+    try {
+        await initFilters();
+        await loadCityHeader();
+        await loadListing();
+    } catch (e) {
+        document.getElementById('loading').innerHTML =
+            'Could not load listing. <strong>' + escapeHtml(e.message) + '</strong>';
+    }
+}
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — WanderWise</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header" id="site-header"></header>
+<main class="container">
+    <div class="auth-card">
+        <h1>Welcome back</h1>
+        <p class="hint">Demo account: <strong>customer@tours.demo</strong> / <strong>demo123</strong></p>
+        <form id="login-form">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" value="customer@tours.demo" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" value="demo123" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Log in</button>
+            <p id="err" class="error-msg hidden"></p>
+        </form>
+        <p style="margin-top:1.25rem;text-align:center" class="muted">
+            New here? <a href="/register.html">Create an account</a>
+        </p>
+    </div>
+</main>
+<footer class="footer" id="site-footer"></footer>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script>
+const redirect = qs('redirect') || '/';
+
+document.getElementById('login-form').onsubmit = async e => {
+    e.preventDefault();
+    const err = document.getElementById('err');
+    err.classList.add('hidden');
+    try {
+        await api('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            })
+        });
+        location.href = redirect;
+    } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.remove('hidden');
+    }
+};
+</script>
+</body>
+</html>

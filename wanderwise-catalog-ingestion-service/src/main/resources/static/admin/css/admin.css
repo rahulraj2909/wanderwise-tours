@@ -1,0 +1,16 @@
+.admin-header { background: #1a2b3c; color: #fff; }
+.admin-header .logo { color: #fff; }
+.admin-header .logo strong { color: #7ec8ff; }
+.admin-header .nav a { color: #b8c5d4; }
+.admin-header .nav a.active, .admin-header .nav a:hover { color: #fff; }
+.admin-badge { display: inline-block; background: #ff6b35; color: #fff; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 6px; margin-left: 0.5rem; vertical-align: middle; }
+.data-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.data-table th, .data-table td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.data-table th { background: #f8fafc; font-weight: 600; }
+.data-table tr:hover td { background: #f8fafc; }
+.action-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.stat-card { background: var(--card); padding: 1.25rem; border-radius: var(--radius); box-shadow: var(--shadow); }
+.stat-card h3 { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.35rem; }
+.stat-card p { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+.login-box { max-width: 400px; margin: 4rem auto; padding: 2rem; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); }

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking confirmed — WanderWise</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header" id="site-header"></header>
+<main class="container section success-page">
+    <div class="success-icon">✓</div>
+    <h1>You're all set!</h1>
+    <p class="muted">A confirmation has been sent to your email. We look forward to seeing you!</p>
+    <div class="panel" id="details" style="text-align:left;margin:2rem 0"></div>
+    <a href="/" class="btn btn-primary">Explore more tours</a>
+    <a href="/bookings.html" class="btn btn-outline" style="margin-left:0.5rem">My bookings</a>
+</main>
+<footer class="footer" id="site-footer"></footer>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script>
+const ref = qs('ref');
+let b = null;
+try { b = JSON.parse(sessionStorage.getItem('lastBooking') || 'null'); } catch (_) {}
+if (ref && (!b || b.bookingReference !== ref)) {
+    api('/bookings/' + ref).then(x => show(x)).catch(() => {});
+} else if (b) show(b);
+
+function show(booking) {
+    document.getElementById('details').innerHTML = `
+        <div class="summary-row"><span>Booking ID</span><span>${escapeHtml(booking.bookingReference)}</span></div>
+        <div class="summary-row"><span>Tour</span><span>${escapeHtml(booking.attractionTitle)}</span></div>
+        <div class="summary-row"><span>Date</span><span>${booking.visitDate}</span></div>
+        <div class="summary-row"><span>Guests</span><span>${booking.guests}</span></div>
+        <div class="summary-row total"><span>Paid</span><span>₹${formatPrice(booking.totalAmount)}</span></div>
+        <p style="margin-top:1rem"><span class="status-badge status-CONFIRMED">${booking.status}</span></p>`;
+}
+</script>
+</body>
+</html>
