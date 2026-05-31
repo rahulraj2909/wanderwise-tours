@@ -19,16 +19,22 @@ data/
 # Bundled JDK (do not commit)
 .tools/
 
-# --- Not application code (thesis / docs / images) ---
-docs/
+# --- Docs: commit report diagram PNGs only (no markdown / thesis) ---
+docs/*
+!docs/report_diagrams/
+docs/report_diagrams/*
+!docs/report_diagrams/*.png
+docs/report_diagrams/mermaid/
+
 scripts/
 *.md
 !README.md
 *.docx
 *.pdf
 
-# Diagrams & screenshots
+# Images elsewhere (not report diagrams)
 *.png
+!docs/report_diagrams/*.png
 *.jpg
 *.jpeg
 *.gif
