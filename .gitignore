@@ -26,7 +26,7 @@ docs/report_diagrams/*
 !docs/report_diagrams/*.png
 docs/report_diagrams/mermaid/
 
-scripts/
+scripts/__pycache__/
 *.md
 !README.md
 *.docx
