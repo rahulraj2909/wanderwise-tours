@@ -76,7 +76,7 @@ async function loadTours() {
     const loading = document.getElementById('loading');
     loading.classList.remove('hidden');
     grid.innerHTML = '';
-    let q = '?page=0&size=12&sort=popularity';
+    let q = '?page=0&size=8&sort=popularity';
     const kw = document.getElementById('keyword').value.trim();
     const city = document.getElementById('cityId').value;
     const cat = document.getElementById('categoryId').value;
