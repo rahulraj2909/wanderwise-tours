@@ -23,6 +23,7 @@ data/
 docs/
 scripts/
 *.md
+!README.md
 *.docx
 *.pdf
 
