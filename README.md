@@ -2,6 +2,10 @@
 
 Multi-service marketplace for tours and attractions: catalog with vendor ingestion, customer booking UI, and payments.
 
+## Booking home page (customer site — port 8080)
+
+![WanderWise booking home page — Discover Tours & Attractions](docs/report_diagrams/screenshot_home.png)
+
 **Stack:** Java 17 · Spring Boot 3.3.5 · Maven · JPA/H2 (local) · Redis (optional, `full` profile) · Stripe (optional; mock checkout by default)
 
 ## Modules
