@@ -12,6 +12,7 @@ import com.neovarsity.toursattractions.exception.ResourceNotFoundException;
 import com.neovarsity.toursattractions.repository.BookingRepository;
 import com.neovarsity.toursattractions.repository.PaymentRepository;
 import com.neovarsity.toursattractions.util.EntityMapper;
+import com.neovarsity.wanderwise.common.WanderwiseConstants;
 import com.neovarsity.wanderwise.common.dto.CatalogAttractionDto;
 import com.neovarsity.wanderwise.common.dto.CatalogPaxTypeDto;
 import com.stripe.exception.StripeException;
@@ -59,7 +60,8 @@ public class BookingService {
         }
 
         PaxPricing pricing = resolvePricing(attraction, request);
-        String reference = "TA-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        String reference = WanderwiseConstants.BOOKING_REFERENCE_PREFIX
+                + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
         Booking booking = Booking.builder()
                 .bookingReference(reference)

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.neovarsity.toursattractions.exception.BusinessException;
 import com.neovarsity.toursattractions.exception.ResourceNotFoundException;
+import com.neovarsity.wanderwise.common.WanderwiseConstants;
 import com.neovarsity.wanderwise.common.dto.ApiResponse;
 import com.neovarsity.wanderwise.common.dto.CatalogAttractionDto;
 import com.neovarsity.wanderwise.common.dto.CatalogPaxTypeDto;
@@ -24,9 +25,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CatalogClient {
 
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
+
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
+            .connectTimeout(CONNECT_TIMEOUT)
             .build();
 
     @Value("${wanderwise.catalog.base-url:http://localhost:8081}")
@@ -80,15 +84,25 @@ public class CatalogClient {
     }
 
     private <T> T get(String path, TypeReference<ApiResponse<T>> type) {
+        return exchange("GET", path, null, type, true);
+    }
+
+    private <T> T post(String path, Object payload, TypeReference<ApiResponse<T>> type) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(catalogBaseUrl + path))
-                    .timeout(Duration.ofSeconds(30))
-                    .header("X-Internal-Secret", internalSecret)
-                    .GET()
-                    .build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 404) {
+            String json = objectMapper.writeValueAsString(payload);
+            return exchange("POST", path, json, type, false);
+        } catch (BusinessException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new BusinessException("Catalog service unavailable");
+        }
+    }
+
+    private <T> T exchange(String method, String path, String jsonBody,
+                           TypeReference<ApiResponse<T>> type, boolean map404ToNotFound) {
+        try {
+            HttpResponse<String> response = send(method, path, jsonBody);
+            if (map404ToNotFound && response.statusCode() == 404) {
                 throw new ResourceNotFoundException("Catalog resource not found");
             }
             if (response.statusCode() >= 400) {
@@ -103,26 +117,17 @@ public class CatalogClient {
         }
     }
 
-    private <T> T post(String path, Object payload, TypeReference<ApiResponse<T>> type) {
-        try {
-            String json = objectMapper.writeValueAsString(payload);
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(catalogBaseUrl + path))
-                    .timeout(Duration.ofSeconds(30))
-                    .header("X-Internal-Secret", internalSecret)
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(json))
-                    .build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() >= 400) {
-                throw new BusinessException("Catalog service error: " + response.statusCode());
-            }
-            ApiResponse<T> body = objectMapper.readValue(response.body(), type);
-            return body.getData();
-        } catch (BusinessException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw new BusinessException("Catalog service unavailable");
+    private HttpResponse<String> send(String method, String path, String jsonBody) throws Exception {
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(catalogBaseUrl + path))
+                .timeout(REQUEST_TIMEOUT)
+                .header(WanderwiseConstants.INTERNAL_SECRET_HEADER, internalSecret);
+        if ("POST".equals(method)) {
+            builder.header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody != null ? jsonBody : "{}"));
+        } else {
+            builder.GET();
         }
+        return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
     }
 }

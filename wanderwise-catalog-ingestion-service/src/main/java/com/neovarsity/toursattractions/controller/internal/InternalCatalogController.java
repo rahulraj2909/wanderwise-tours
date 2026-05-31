@@ -7,6 +7,7 @@ import com.neovarsity.toursattractions.exception.ResourceNotFoundException;
 import com.neovarsity.toursattractions.repository.PaxTypeRepository;
 import com.neovarsity.toursattractions.service.AttractionService;
 import com.neovarsity.toursattractions.service.TimeSlotService;
+import com.neovarsity.wanderwise.common.WanderwiseConstants;
 import com.neovarsity.wanderwise.common.dto.ApiResponse;
 import com.neovarsity.wanderwise.common.dto.CatalogAttractionDto;
 import com.neovarsity.wanderwise.common.dto.CatalogPaxTypeDto;
@@ -34,7 +35,7 @@ public class InternalCatalogController {
     @GetMapping("/attractions/{id}")
     public ApiResponse<CatalogAttractionDto> getAttraction(
             @PathVariable Long id,
-            @RequestHeader(value = "X-Internal-Secret", required = false) String secret) {
+            @RequestHeader(value = WanderwiseConstants.INTERNAL_SECRET_HEADER, required = false) String secret) {
         verifySecret(secret);
         Attraction a = attractionService.findEntity(id);
         return ApiResponse.ok(CatalogAttractionDto.builder()
@@ -50,7 +51,7 @@ public class InternalCatalogController {
     @GetMapping("/attractions/{id}/pax-types")
     public ApiResponse<List<CatalogPaxTypeDto>> listPaxTypes(
             @PathVariable Long id,
-            @RequestHeader(value = "X-Internal-Secret", required = false) String secret) {
+            @RequestHeader(value = WanderwiseConstants.INTERNAL_SECRET_HEADER, required = false) String secret) {
         verifySecret(secret);
         attractionService.findEntity(id);
         List<CatalogPaxTypeDto> types = paxTypeRepository.findByAttractionIdAndActiveTrueOrderByCodeAsc(id).stream()
@@ -62,7 +63,7 @@ public class InternalCatalogController {
     @GetMapping("/pax-types/{paxTypeId}")
     public ApiResponse<CatalogPaxTypeDto> getPaxType(
             @PathVariable Long paxTypeId,
-            @RequestHeader(value = "X-Internal-Secret", required = false) String secret) {
+            @RequestHeader(value = WanderwiseConstants.INTERNAL_SECRET_HEADER, required = false) String secret) {
         verifySecret(secret);
         PaxType pax = paxTypeRepository.findById(paxTypeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pax type not found: " + paxTypeId));
@@ -73,7 +74,7 @@ public class InternalCatalogController {
     public ApiResponse<SlotActionResultDto> reserve(
             @PathVariable Long slotId,
             @Valid @RequestBody ReserveSeatsRequest request,
-            @RequestHeader(value = "X-Internal-Secret", required = false) String secret) {
+            @RequestHeader(value = WanderwiseConstants.INTERNAL_SECRET_HEADER, required = false) String secret) {
         verifySecret(secret);
         try {
             timeSlotService.reserveSeats(slotId, request.getGuests());
@@ -97,7 +98,7 @@ public class InternalCatalogController {
     public ApiResponse<SlotActionResultDto> release(
             @PathVariable Long slotId,
             @Valid @RequestBody ReserveSeatsRequest request,
-            @RequestHeader(value = "X-Internal-Secret", required = false) String secret) {
+            @RequestHeader(value = WanderwiseConstants.INTERNAL_SECRET_HEADER, required = false) String secret) {
         verifySecret(secret);
         timeSlotService.releaseSeats(slotId, request.getGuests());
         var slot = timeSlotService.findEntity(slotId);

@@ -26,7 +26,7 @@ public class StripePaymentService {
     @Value("${stripe.webhook-secret:whsec_placeholder}")
     private String webhookSecret;
 
-    @Value("${app.base-url:http://localhost:8081}")
+    @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
     public String createCheckoutSession(Booking booking, Payment payment) throws StripeException {
@@ -70,6 +70,6 @@ public class StripePaymentService {
     }
 
     public void logStripeDisabled() {
-        log.info("Stripe integration disabled — using mock payment flow for local/demo");
+        log.info("Stripe integration disabled; using mock payment flow for local/demo");
     }
 }
